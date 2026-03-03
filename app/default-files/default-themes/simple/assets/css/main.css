@@ -808,7 +808,7 @@ textarea {
 .navbar .navbar__menu > li:hover > a, .navbar .navbar__menu > li:hover > span[role=button], .navbar .navbar__menu > li:focus-within > a, .navbar .navbar__menu > li:focus-within > span[role=button] {
   color: var(--nav-link-color-hover);
 }
-.navbar .has-submenu:active > .navbar__submenu, .navbar .has-submenu:focus-within > .navbar__submenu, .navbar .has-submenu:hover > .navbar__submenu, .navbar .has-submenu > .navbar__submenu[aria-hidden=false] > .navbar__submenu {
+.navbar .has-submenu:active > .navbar__submenu, .navbar .has-submenu:focus-within > .navbar__submenu, .navbar .has-submenu:hover > .navbar__submenu {
   left: 0;
   opacity: 1;
   -webkit-transform: scale(1);
@@ -816,7 +816,7 @@ textarea {
   visibility: visible;
   margin-top: 0.8rem;
 }
-.navbar .has-submenu:active > .navbar__submenu:before, .navbar .has-submenu:focus-within > .navbar__submenu:before, .navbar .has-submenu:hover > .navbar__submenu:before, .navbar .has-submenu > .navbar__submenu[aria-hidden=false] > .navbar__submenu:before {
+.navbar .has-submenu:active > .navbar__submenu:before, .navbar .has-submenu:focus-within > .navbar__submenu:before, .navbar .has-submenu:hover > .navbar__submenu:before {
   content: "";
   height: 1rem;
   left: 0;
@@ -824,15 +824,21 @@ textarea {
   width: 100%;
   top: -1rem;
 }
-.navbar .has-submenu.is-right-submenu:active > .navbar__submenu, .navbar .has-submenu.is-right-submenu:focus-within > .navbar__submenu, .navbar .has-submenu.is-right-submenu:hover > .navbar__submenu, .navbar .has-submenu > .navbar__submenu[aria-hidden=false].is-right-submenu > .navbar__submenu {
+.navbar .has-submenu:active > .navbar__submenu.is-right-submenu, .navbar .has-submenu:focus-within > .navbar__submenu.is-right-submenu, .navbar .has-submenu:hover > .navbar__submenu.is-right-submenu {
   left: auto;
   right: 0;
   -webkit-transform-origin: right top;
           transform-origin: right top;
 }
-.navbar .has-submenu .has-submenu:active > .navbar__submenu, .navbar .has-submenu .has-submenu:focus-within > .navbar__submenu, .navbar .has-submenu .has-submenu:hover > .navbar__submenu, .navbar .has-submenu .has-submenu > .navbar__submenu[aria-hidden=false] > .navbar__submenu {
+.navbar .has-submenu .has-submenu:active > .navbar__submenu, .navbar .has-submenu .has-submenu:focus-within > .navbar__submenu, .navbar .has-submenu .has-submenu:hover > .navbar__submenu {
   top: 0;
   margin-top: 0;
+}
+.navbar .has-submenu .has-submenu:active > .navbar__submenu.is-right-submenu, .navbar .has-submenu .has-submenu:focus-within > .navbar__submenu.is-right-submenu, .navbar .has-submenu .has-submenu:hover > .navbar__submenu.is-right-submenu {
+  left: auto;
+  right: 0;
+  -webkit-transform-origin: right top;
+          transform-origin: right top;
 }
 .navbar .navbar__submenu {
   background: var(--lighter);

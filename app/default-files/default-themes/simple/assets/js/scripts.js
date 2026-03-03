@@ -26,451 +26,614 @@ window.addEventListener('scroll', () => {
 
 // Dropdown menu
 (function (menuConfig) {
-	/**
-	 * Merge default config with the theme overrided ones
-	 */
-	var defaultConfig = {
-		 // behaviour
-		 mobileMenuMode: 'overlay',
-		 animationSpeed: 300,
-		 submenuWidth: 300,
-		 doubleClickTime: 500,
-		 mobileMenuExpandableSubmenus: false,
-		 isHoverMenu: true,
-		 // selectors
-		 wrapperSelector: '.navbar',
-		 buttonSelector: '.navbar__toggle',
-		 menuSelector: '.navbar__menu',
-		 submenuSelector: '.navbar__submenu',
-		 mobileMenuSidebarLogoSelector: null,
-		 mobileMenuSidebarLogoUrl: null,
-		 relatedContainerForOverlayMenuSelector: null,
-		 // attributes 
-		 ariaButtonAttribute: 'aria-haspopup',
-		 // CSS classes
-		 separatorItemClass: 'is-separator',
-		 parentItemClass: 'has-submenu',
-		 submenuLeftPositionClass: 'is-left-submenu',
-		 submenuRightPositionClass: 'is-right-submenu',
-		 mobileMenuOverlayClass: 'navbar_mobile_overlay',
-		 mobileMenuSubmenuWrapperClass: 'navbar__submenu_wrapper',
-		 mobileMenuSidebarClass: 'navbar_mobile_sidebar',
-		 mobileMenuSidebarOverlayClass: 'navbar_mobile_sidebar__overlay',
-		 hiddenElementClass: 'is-hidden',
-		 openedMenuClass: 'is-active',
-		 noScrollClass: 'no-scroll',
-		 relatedContainerForOverlayMenuClass: 'is-visible'
-	};
+  /**
+   * Merge default config with the theme overrided ones
+   */
+  var defaultConfig = {
+    // behaviour
+    mobileMenuMode: 'sidebar', // 'overlay' or 'sidebar'
+    animationSpeed: 300,
+    submenuWidth: 300,
+    doubleClickTime: 500,
+    mobileMenuExpandableSubmenus: true,
+    isHoverMenu: true,
+    // selectors
+    wrapperSelector: '.navbar',
+    buttonSelector: '.navbar__toggle',
+    menuSelector: '.navbar__menu',
+    submenuSelector: '.navbar__submenu',
+    mobileMenuSidebarLogoSelector: null,
+    mobileMenuSidebarLogoUrl: null,
+    relatedContainerForOverlayMenuSelector: null,
+    // attributes 
+    ariaButtonAttribute: 'aria-haspopup',
+    // CSS classes
+    separatorItemClass: 'is-separator',
+    parentItemClass: 'has-submenu',
+    submenuLeftPositionClass: 'is-left-submenu',
+    submenuRightPositionClass: 'is-right-submenu',
+    mobileMenuOverlayClass: 'navbar_mobile_overlay',
+    mobileMenuSubmenuWrapperClass: 'navbar__submenu_wrapper',
+    mobileMenuSidebarClass: 'navbar_mobile_sidebar',
+    mobileMenuSidebarOverlayClass: 'navbar_mobile_sidebar__overlay',
+    hiddenElementClass: 'is-hidden',
+    openedMenuClass: 'is-active',
+    noScrollClass: 'no-scroll',
+    relatedContainerForOverlayMenuClass: 'is-visible'
+  };
 
-	var config = {};
+  var config = {};
 
-	Object.keys(defaultConfig).forEach(function(key) {
-		 config[key] = defaultConfig[key];
-	});
+  Object.keys(defaultConfig).forEach(function (key) {
+    config[key] = defaultConfig[key];
+  });
 
-	if (typeof menuConfig === 'object') {
-		 Object.keys(menuConfig).forEach(function(key) {
-			  config[key] = menuConfig[key];
-		 });
-	}
+  if (typeof menuConfig === 'object') {
+    Object.keys(menuConfig).forEach(function (key) {
+      config[key] = menuConfig[key];
+    });
+  }
 
-	/**
-	 * Menu initializer
-	 */
-	function init () {
-		 if (!document.querySelectorAll(config.wrapperSelector).length) {
-			  return;
-		 }
+  /**
+   * Calculate and apply correct submenu position (left or right)
+   */
+  function positionSubmenu(parentItem) {
+    var submenu = parentItem.querySelector(config.submenuSelector);
+    if (!submenu) return;
 
-		 initSubmenuPositions();
+    var itemPosition = parentItem.getBoundingClientRect().left;
+    var widthMultiplier = 2;
 
-		 if (config.mobileMenuMode === 'overlay') {
-			  initMobileMenuOverlay();
-		 } else if (config.mobileMenuMode === 'sidebar') {
-			  initMobileMenuSidebar();
-		 }
+    if (parentItem.parentNode === document.querySelector(config.menuSelector)) {
+      widthMultiplier = 1;
+    }
 
-		 initClosingMenuOnClickLink();
+    if (config.submenuWidth !== 'auto') {
+      var submenuPotentialPosition = itemPosition + (config.submenuWidth * widthMultiplier);
 
-		 if (!config.isHoverMenu) {
-			  initAriaAttributes();
-		 }
-	};
+      if (window.innerWidth < submenuPotentialPosition) {
+        submenu.classList.remove(config.submenuLeftPositionClass);
+        submenu.classList.add(config.submenuRightPositionClass);
+      } else {
+        submenu.classList.remove(config.submenuRightPositionClass);
+        submenu.classList.add(config.submenuLeftPositionClass);
+      }
+    } else {
+      var submenuPotentialPosition = 0;
+      var submenuPosition = 0;
 
-	/**
-	 * Function responsible for the submenu positions
-	 */
-function initSubmenuPositions () {
-		 var submenuParents = document.querySelectorAll(config.wrapperSelector + ' .' + config.parentItemClass);
+      if (widthMultiplier === 1) {
+        submenuPotentialPosition = itemPosition + submenu.clientWidth;
+      } else {
+        submenuPotentialPosition = itemPosition + parentItem.clientWidth + submenu.clientWidth;
+      }
 
-		 for (var i = 0; i < submenuParents.length; i++) {
-			  var parentItem = submenuParents[i];
-			  // Szukamy triggera (linku lub spana), który bezpośrednio zarządza tym podmenu
-			  var trigger = parentItem.querySelector('a, .' + config.separatorItemClass);
-			  var submenu = parentItem.querySelector(config.submenuSelector);
-			  var eventTrigger = config.isHoverMenu ? 'mouseenter' : 'click';
+      if (window.innerWidth < submenuPotentialPosition) {
+        submenu.classList.remove(config.submenuLeftPositionClass);
+        submenu.classList.add(config.submenuRightPositionClass);
+        submenuPosition = -1 * submenu.clientWidth;
+        submenu.removeAttribute('style');
 
-			  if (!submenu || !trigger) continue;
+        if (widthMultiplier === 1) {
+          submenuPosition = 0;
+          submenu.style.right = submenuPosition + 'px';
+        } else {
+          submenu.style.right = parentItem.clientWidth + 'px';
+        }
+      } else {
+        submenu.classList.remove(config.submenuRightPositionClass);
+        submenu.classList.add(config.submenuLeftPositionClass);
+        submenuPosition = parentItem.clientWidth;
 
-			  // Obsługa Hover / MouseEnter
-			  parentItem.addEventListener(eventTrigger, function () {
-					var submenuInner = this.querySelector(config.submenuSelector);
-					var itemPosition = this.getBoundingClientRect().left;
-					var widthMultiplier = 2;
+        if (widthMultiplier === 1) {
+          submenuPosition = 0;
+        }
 
-					if (this.parentNode === document.querySelector(config.menuSelector)) {
-						 widthMultiplier = 1;
-					}
+        submenu.removeAttribute('style');
+        submenu.style.left = submenuPosition + 'px';
+      }
+    }
 
-					if (config.submenuWidth !== 'auto') {
-						 var submenuPotentialPosition = itemPosition + (config.submenuWidth * widthMultiplier);
+    submenu.setAttribute('aria-hidden', false);
+  }
 
-						 if (window.innerWidth < submenuPotentialPosition) {
-							  submenuInner.classList.remove(config.submenuLeftPositionClass);
-							  submenuInner.classList.add(config.submenuRightPositionClass);
-						 } else {
-							  submenuInner.classList.remove(config.submenuRightPositionClass);
-							  submenuInner.classList.add(config.submenuLeftPositionClass);
-						 }
-					}
+  /**
+   * Keyboard navigation for submenus
+   */
+  function initKeyboardNavigation() {
+    // Make separator spans inside has-submenu focusable (fallback if HBS didn't set it)
+    var separatorSpans = document.querySelectorAll(
+      config.wrapperSelector + ' .' + config.parentItemClass + ' > span.' + config.separatorItemClass
+    );
 
-					submenuInner.setAttribute('aria-hidden', false);
-					var currentTrigger = this.querySelector('a, .' + config.separatorItemClass);
-					if (currentTrigger) currentTrigger.setAttribute('aria-expanded', true);
-			  });
+    for (var i = 0; i < separatorSpans.length; i++) {
+      if (!separatorSpans[i].hasAttribute('tabindex')) {
+        separatorSpans[i].setAttribute('tabindex', '0');
+        separatorSpans[i].setAttribute('role', 'button');
+      }
+    }
 
-			  // Obsługa MouseLeave
-			  if (config.isHoverMenu) {
-					parentItem.addEventListener('mouseleave', function () {
-						 var submenuInner = this.querySelector(config.submenuSelector);
-						 submenuInner.removeAttribute('style');
-						 submenuInner.setAttribute('aria-hidden', true);
-						 var currentTrigger = this.querySelector('a, .' + config.separatorItemClass);
-						 if (currentTrigger) currentTrigger.setAttribute('aria-expanded', false);
-					});
-			  }
+    // Keyboard events on all submenu parents (desktop menu)
+    var allParents = document.querySelectorAll(
+      config.wrapperSelector + ' ' + config.menuSelector + ' .' + config.parentItemClass
+    );
 
-			  // --- DOSTĘPNOŚĆ KLAWIATURY (A11Y) ---
+    for (var i = 0; i < allParents.length; i++) {
+      (function (parent) {
+        parent.addEventListener('keydown', function (e) {
+          var target = e.target;
+          var submenu = parent.querySelector(config.submenuSelector);
+          if (!submenu) return;
 
-			  // Otwieranie gdy fokus wchodzi do LI (przez Tab)
-			  parentItem.addEventListener('focusin', function () {
-					var submenuInner = this.querySelector(config.submenuSelector);
-					submenuInner.setAttribute('aria-hidden', false);
-					var currentTrigger = this.querySelector('a, .' + config.separatorItemClass);
-					if (currentTrigger) currentTrigger.setAttribute('aria-expanded', true);
-			  });
+          // Only handle events on direct trigger (a or span) of this parent
+          if (target.parentNode !== parent) return;
 
-			  // Zamykanie gdy fokus całkowicie opuszcza LI
-			  parentItem.addEventListener('focusout', function (e) {
-					if (!this.contains(e.relatedTarget)) {
-						 var submenuInner = this.querySelector(config.submenuSelector);
-						 submenuInner.setAttribute('aria-hidden', true);
-						 var currentTrigger = this.querySelector('a, .' + config.separatorItemClass);
-						 if (currentTrigger) currentTrigger.setAttribute('aria-expanded', false);
-					}
-			  });
+          // Enter or Space — toggle submenu
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (target.tagName === 'SPAN' && target.classList.contains(config.separatorItemClass)) {
+              e.preventDefault();
+              e.stopPropagation();
+              var isHidden = submenu.getAttribute('aria-hidden') !== 'false';
 
-			  // Obsługa Enter i Spacji dla separatorów (span role="button")
-			  if (trigger.tagName === 'SPAN') {
-					trigger.addEventListener('keydown', function (e) {
-						 if (e.key === 'Enter' || e.key === ' ') {
-							  e.preventDefault();
-							  var submenuInner = this.parentNode.querySelector(config.submenuSelector);
-							  var isExpanded = this.getAttribute('aria-expanded') === 'true';
-							  
-							  submenuInner.setAttribute('aria-hidden', isExpanded);
-							  this.setAttribute('aria-expanded', !isExpanded);
-						 }
-					});
-			  }
-		 }
-	}
+              if (isHidden) {
+                // Use the same positioning logic as hover
+                parent.classList.remove('is-submenu-closed');
+                positionSubmenu(parent);
+                target.setAttribute('aria-expanded', 'true');
 
-	/**
-	 * Function used to init mobile menu - overlay mode
-	 */
-	function initMobileMenuOverlay () {
-		 var menuWrapper = document.createElement('div');
-		 menuWrapper.classList.add(config.mobileMenuOverlayClass);
-		 menuWrapper.classList.add(config.hiddenElementClass);
-		 var menuContentHTML = document.querySelector(config.menuSelector).outerHTML;
-		 menuWrapper.innerHTML = menuContentHTML;
-		 document.body.appendChild(menuWrapper);
-
-		 // Init toggle submenus
-		 if (config.mobileMenuExpandableSubmenus) {
-			  wrapSubmenusIntoContainer(menuWrapper);
-			  initToggleSubmenu(menuWrapper);
-		 } else {
-			  setAriaForSubmenus(menuWrapper);
-		 }
-
-		 // Init button events
-		 var button = document.querySelector(config.buttonSelector);
-
-		 button.addEventListener('click', function () {
-			  var relatedContainer = document.querySelector(config.relatedContainerForOverlayMenuSelector);
-			  menuWrapper.classList.toggle(config.hiddenElementClass);
-			  button.classList.toggle(config.openedMenuClass);
-			  button.setAttribute(config.ariaButtonAttribute, button.classList.contains(config.openedMenuClass));
-
-			  if (button.classList.contains(config.openedMenuClass)) {
-					document.documentElement.classList.add(config.noScrollClass);
-
-					if (relatedContainer) {
-						 relatedContainer.classList.add(config.relatedContainerForOverlayMenuClass);
-					}
-			  } else {
-					document.documentElement.classList.remove(config.noScrollClass);
-
-					if (relatedContainer) {
-						 relatedContainer.classList.remove(config.relatedContainerForOverlayMenuClass);
-					}
-			  }
-		 });   
-	}
-
-	/**
-	 * Function used to init mobile menu - sidebar mode
-	 */
-	function initMobileMenuSidebar () {
-		 // Create menu structure
-		 var menuWrapper = document.createElement('div');
-		 menuWrapper.classList.add(config.mobileMenuSidebarClass);
-		 menuWrapper.classList.add(config.hiddenElementClass);
-		 var menuContentHTML = '';
-
-		 if (config.mobileMenuSidebarLogoSelector !== null) {
-			  menuContentHTML = document.querySelector(config.mobileMenuSidebarLogoSelector).outerHTML;
-		 } else if (config.mobileMenuSidebarLogoUrl !== null) {
-			  menuContentHTML = '<img src="' + config.mobileMenuSidebarLogoUrl + '" alt="" />';
-		 }
-
-		 menuContentHTML += document.querySelector(config.menuSelector).outerHTML;
-		 menuWrapper.innerHTML = menuContentHTML;
-
-		 var menuOverlay = document.createElement('div');
-		 menuOverlay.classList.add(config.mobileMenuSidebarOverlayClass);
-		 menuOverlay.classList.add(config.hiddenElementClass);
-
-		 document.body.appendChild(menuOverlay);
-		 document.body.appendChild(menuWrapper);
-
-		 // Init toggle submenus
-		 if (config.mobileMenuExpandableSubmenus) {
-			  wrapSubmenusIntoContainer(menuWrapper);
-			  initToggleSubmenu(menuWrapper);
-		 } else {
-			  setAriaForSubmenus(menuWrapper);
-		 }
-
-		 // Menu events
-		 menuWrapper.addEventListener('click', function (e) {
-			  e.stopPropagation();
-		 });
-
-		 menuOverlay.addEventListener('click', function () {
-			  menuWrapper.classList.add(config.hiddenElementClass);
-			  menuOverlay.classList.add(config.hiddenElementClass);
-			  button.classList.remove(config.openedMenuClass);
-			  button.setAttribute(config.ariaButtonAttribute, false);
-			  document.documentElement.classList.remove(config.noScrollClass);
-		 });
-
-		 // Init button events
-		 var button = document.querySelector(config.buttonSelector);
-
-		 button.addEventListener('click', function () {
-			  menuWrapper.classList.toggle(config.hiddenElementClass);
-			  menuOverlay.classList.toggle(config.hiddenElementClass);
-			  button.classList.toggle(config.openedMenuClass);
-			  button.setAttribute(config.ariaButtonAttribute, button.classList.contains(config.openedMenuClass));
-			  document.documentElement.classList.toggle(config.noScrollClass);
-		 });
-	}
-
-	/**
-	 * Set aria-hidden="false" for submenus
-	 */
-	function setAriaForSubmenus (menuWrapper) {
-		 var submenus = menuWrapper.querySelectorAll(config.submenuSelector);
-
-		 for (var i = 0; i < submenus.length; i++) {
-			  submenus[i].setAttribute('aria-hidden', false);
-              // DODANE: Aktualizacja triggera, gdy submenus są widoczne domyślnie
-              var trigger = submenus[i].closest('.' + config.parentItemClass).firstElementChild;
-              if (trigger) {
-                  trigger.setAttribute('aria-expanded', true);
+                // Focus first link in submenu
+                var firstLink = submenu.querySelector('a, span[tabindex]');
+                if (firstLink) firstLink.focus();
+              } else {
+                parent.classList.add('is-submenu-closed');
+                submenu.setAttribute('aria-hidden', 'true');
+                submenu.removeAttribute('style');
+                target.setAttribute('aria-expanded', 'false');
               }
-		 }
-	}
+            }
+          }
 
-	/**
-	 * Wrap all submenus into div wrappers
-	 */
-	function wrapSubmenusIntoContainer (menuWrapper) {
-		 var submenus = menuWrapper.querySelectorAll(config.submenuSelector);
+          // Escape — close submenu and return focus
+          if (e.key === 'Escape') {
+            if (submenu.getAttribute('aria-hidden') !== 'true') {
+              parent.classList.add('is-submenu-closed');
+              submenu.setAttribute('aria-hidden', 'true');
+              submenu.removeAttribute('style');
+              var trigger = parent.querySelector('a, span[tabindex="0"]');
+              if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.focus();
+              }
+              e.stopPropagation();
+            }
+          }
+        });
 
-		 for (var i = 0; i < submenus.length; i++) {
-			  var submenuWrapper = document.createElement('div');
-			  submenuWrapper.classList.add(config.mobileMenuSubmenuWrapperClass);
-			  submenus[i].parentNode.insertBefore(submenuWrapper, submenus[i]);
-			  submenuWrapper.appendChild(submenus[i]);
-		 }
-	}
+        // Focus listener: show submenu and position on keyboard focus
+        var trigger = parent.querySelector('a[aria-haspopup], span[aria-haspopup]');
+        if (trigger) {
+          trigger.addEventListener('focus', function() {
+            parent.classList.remove('is-submenu-closed');
+            positionSubmenu(parent);
+            trigger.setAttribute('aria-expanded', 'true');
+          });
 
-	/**
-	 * Initialize submenu toggle events
-	 */
-function initToggleSubmenu (menuWrapper) {
-		 var parents = menuWrapper.querySelectorAll('.' + config.parentItemClass);
+          // ArrowDown: open submenu and focus first item
+          trigger.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              var submenu = parent.querySelector(config.submenuSelector);
+              if (submenu) {
+                parent.classList.remove('is-submenu-closed');
+                positionSubmenu(parent);
+                trigger.setAttribute('aria-expanded', 'true');
+                var firstLink = submenu.querySelector('a, span[tabindex]');
+                if (firstLink) firstLink.focus();
+              }
+            }
+          });
+        }
 
-		 for (var i = 0; i < parents.length; i++) {
-			  parents[i].addEventListener('click', function (e) {
-					e.stopPropagation();
-					var submenu = this.querySelector('.' + config.mobileMenuSubmenuWrapperClass);
-					var content = submenu.firstElementChild;
-                    var trigger = this.firstElementChild; // LINK or SPAN
+        // Clear keyboard-close override on mouseenter (hover after Escape)
+        parent.addEventListener('mouseenter', function() {
+          parent.classList.remove('is-submenu-closed');
+        });
 
-					if (submenu.classList.contains(config.openedMenuClass)) {
-						 var height = content.clientHeight;   
-						 submenu.style.height = height + 'px';
-						 
-						 setTimeout(function () {
-							  submenu.style.height = '0px';
-						 }, 0);
+        // Clean up when focus leaves parent entirely
+        parent.addEventListener('focusout', function() {
+          setTimeout(function() {
+            if (!parent.contains(document.activeElement)) {
+              parent.classList.remove('is-submenu-closed');
+              var submenu = parent.querySelector(config.submenuSelector);
+              if (submenu) {
+                submenu.setAttribute('aria-hidden', 'true');
+                submenu.removeAttribute('style');
+              }
+              var t = parent.querySelector('a[aria-haspopup], span[aria-haspopup]');
+              if (t) t.setAttribute('aria-expanded', 'false');
+            }
+          }, 0);
+        });
 
-						 setTimeout(function () {
-							  submenu.removeAttribute('style');
-							  submenu.classList.remove(config.openedMenuClass);
-						 }, config.animationSpeed);
+      })(allParents[i]);
+    }
 
-						 content.setAttribute('aria-hidden', true);
-                         // POPRAWIONE: Ustawiamy na triggerze (spanie/linku), a nie na liście
-                         if (trigger) {
-                             trigger.setAttribute('aria-expanded', false);
-                         }
-					} else {
-						 var height = content.clientHeight;   
-						 submenu.classList.add(config.openedMenuClass);
-						 submenu.style.height = '0px';
-						 
-						 setTimeout(function () {
-							  submenu.style.height = height + 'px';
-						 }, 0);
+    // Escape from inside submenu — bubble up and close
+    var allSubmenus = document.querySelectorAll(
+      config.wrapperSelector + ' ' + config.menuSelector + ' ' + config.submenuSelector
+    );
 
-						 setTimeout(function () {
-							  submenu.removeAttribute('style');
-						 }, config.animationSpeed);
+    for (var i = 0; i < allSubmenus.length; i++) {
+      (function (submenu) {
+        submenu.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            submenu.setAttribute('aria-hidden', 'true');
+            submenu.removeAttribute('style');
+            var parentItem = submenu.closest('.' + config.parentItemClass);
+            if (parentItem) {
+              parentItem.classList.add('is-submenu-closed');
+              var trigger = parentItem.querySelector('a, span[tabindex="0"]');
+              if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.focus();
+              }
+            }
+            e.stopPropagation();
+          }
+        });
+      })(allSubmenus[i]);
+    }
+  }
 
-						 content.setAttribute('aria-hidden', false);
-                         // POPRAWIONE: Ustawiamy na triggerze (spanie/linku)
-                         if (trigger) {
-                             trigger.setAttribute('aria-expanded', true);
-                         }
-					}
-			  });
+  /**
+   * Menu initializer
+   */
+  function init() {
+    if (!document.querySelectorAll(config.wrapperSelector).length) {
+      return;
+    }
 
-			  // Block Links
-			  var childNodes = parents[i].children;
-			  for (var j = 0; j < childNodes.length; j++) {
-					if (childNodes[j].tagName === 'A') {
-						 childNodes[j].addEventListener('click', function (e) {
-							  var lastClick = parseInt(this.getAttribute('data-last-click'), 10);
-							  var currentTime = +new Date();
-							  if (isNaN(lastClick)) {
-									e.preventDefault();
-									this.setAttribute('data-last-click', currentTime);
-							  } else if (lastClick + config.doubleClickTime <= currentTime) {
-									e.preventDefault();
-									this.setAttribute('data-last-click', currentTime);
-							  } else if (lastClick + config.doubleClickTime > currentTime) {
-									e.stopPropagation();
-									closeMenu(this, true);
-							  }
-						 });
-					}
-			  }
-		 }
-	}
+    initSubmenuPositions();
 
-	/**
-	 * Set aria-* attributes according to the current activity state
-	 */
-	function initAriaAttributes () {
-		 var allAriaElements = document.querySelectorAll(config.wrapperSelector + ' ' + '*[aria-hidden]');
+    if (config.mobileMenuMode === 'overlay') {
+      initMobileMenuOverlay();
+    } else if (config.mobileMenuMode === 'sidebar') {
+      initMobileMenuSidebar();
+    }
 
-		 for (var i = 0; i < allAriaElements.length; i++) {
-			  var ariaElement = allAriaElements[i];
+    initClosingMenuOnClickLink();
 
-			  if (
-					ariaElement.parentNode.classList.contains('active') ||
-					ariaElement.parentNode.classList.contains('active-parent')
-			  ) {
-					ariaElement.setAttribute('aria-hidden', 'false');
-					ariaElement.parentNode.firstElementChild.setAttribute('aria-expanded', true);
-			  } else {
-					ariaElement.setAttribute('aria-hidden', 'true');
-					ariaElement.parentNode.firstElementChild.setAttribute('aria-expanded', false);
-			  }
-		 }
-	}
+    if (!config.isHoverMenu) {
+      initAriaAttributes();
+    }
 
-	/**
-	 * Close menu on click link
-	 */
-	function initClosingMenuOnClickLink () {
-		 var links = document.querySelectorAll(config.menuSelector + ' a');
+    initKeyboardNavigation();
+  };
 
-		 for (var i = 0; i < links.length; i++) {
-			  if (links[i].parentNode.classList.contains(config.parentItemClass)) {
-					continue;
-			  }
+  /**
+   * Function responsible for the submenu positions
+   */
+function initSubmenuPositions() {
+    var submenuParents = document.querySelectorAll(config.wrapperSelector + ' .' + config.parentItemClass);
 
-			  links[i].addEventListener('click', function (e) {
-					closeMenu(this, false);
-			  });
-		 }
-	}
+    for (var i = 0; i < submenuParents.length; i++) {
+      var eventTrigger = config.isHoverMenu ? 'mouseenter' : 'click';
 
-	/**
-	 * Close menu
-	 */
-	function closeMenu (clickedLink, forceClose) {
-		 if (forceClose === false) {
-			  if (clickedLink.parentNode.classList.contains(config.parentItemClass)) {
-					return;
-			  }
-		 }
+      submenuParents[i].addEventListener(eventTrigger, function () {
+        positionSubmenu(this);
+      });
 
-		 var relatedContainer = document.querySelector(config.relatedContainerForOverlayMenuSelector);
-		 var button = document.querySelector(config.buttonSelector);
-		 var menuWrapper = document.querySelector('.' + config.mobileMenuOverlayClass);
+      if (config.isHoverMenu) {
+        submenuParents[i].addEventListener('mouseleave', function () {
+          var submenu = this.querySelector(config.submenuSelector);
+          submenu.removeAttribute('style');
+          submenu.setAttribute('aria-hidden', true);
+        });
+      }
 
-		 if (!menuWrapper) {
-			  menuWrapper = document.querySelector('.' + config.mobileMenuSidebarClass);
-		 }
+      // Keyboard: position submenu on focusin (Tab navigation)
+      submenuParents[i].addEventListener('focusin', function () {
+        positionSubmenu(this);
+      });
 
-		 menuWrapper.classList.add(config.hiddenElementClass);
-		 button.classList.remove(config.openedMenuClass);
-		 button.setAttribute(config.ariaButtonAttribute, false);
-		 document.documentElement.classList.remove(config.noScrollClass);
+      submenuParents[i].addEventListener('focusout', function (e) {
+        var self = this;
+        // Delay to check if focus moved to another child inside this parent
+        setTimeout(function () {
+          if (!self.contains(document.activeElement)) {
+            var submenu = self.querySelector(config.submenuSelector);
+            if (submenu) {
+              submenu.removeAttribute('style');
+              submenu.setAttribute('aria-hidden', true);
+              // Reset aria-expanded on trigger
+              var trigger = self.querySelector('a, span[tabindex="0"]');
+              if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+              }
+            }
+          }
+        }, 0);
+      });
+    }
+  }
 
-		 if (relatedContainer) {
-			  relatedContainer.classList.remove(config.relatedContainerForOverlayMenuClass);
-		 }
+  /**
+   * Function used to init mobile menu - overlay mode
+   */
+  function initMobileMenuOverlay() {
+    var menuWrapper = document.createElement('div');
+    menuWrapper.classList.add(config.mobileMenuOverlayClass);
+    menuWrapper.classList.add(config.hiddenElementClass);
+    var menuContentHTML = document.querySelector(config.menuSelector).outerHTML;
+    menuWrapper.innerHTML = menuContentHTML;
+    document.body.appendChild(menuWrapper);
 
-		 var menuOverlay = document.querySelector('.' + config.mobileMenuSidebarOverlayClass);
+    // Init toggle submenus
+    if (config.mobileMenuExpandableSubmenus) {
+      wrapSubmenusIntoContainer(menuWrapper);
+      initToggleSubmenu(menuWrapper);
+    } else {
+      setAriaForSubmenus(menuWrapper);
+    }
 
-		 if (menuOverlay) {
-			  menuOverlay.classList.add(config.hiddenElementClass);
-		 }
-	}
+    // Init button events
+    var button = document.querySelector(config.buttonSelector);
 
-	/**
-	 * Run menu scripts 
-	 */
-	init();
+    button.addEventListener('click', function () {
+      var relatedContainer = document.querySelector(config.relatedContainerForOverlayMenuSelector);
+      menuWrapper.classList.toggle(config.hiddenElementClass);
+      button.classList.toggle(config.openedMenuClass);
+      button.setAttribute(config.ariaButtonAttribute, button.classList.contains(config.openedMenuClass));
+
+      if (button.classList.contains(config.openedMenuClass)) {
+        document.documentElement.classList.add(config.noScrollClass);
+
+        if (relatedContainer) {
+          relatedContainer.classList.add(config.relatedContainerForOverlayMenuClass);
+        }
+      } else {
+        document.documentElement.classList.remove(config.noScrollClass);
+
+        if (relatedContainer) {
+          relatedContainer.classList.remove(config.relatedContainerForOverlayMenuClass);
+        }
+      }
+    });
+  }
+
+  /**
+   * Function used to init mobile menu - sidebar mode
+   */
+  function initMobileMenuSidebar() {
+    // Create menu structure
+    var menuWrapper = document.createElement('div');
+    menuWrapper.classList.add(config.mobileMenuSidebarClass);
+    menuWrapper.classList.add(config.hiddenElementClass);
+    var menuContentHTML = '';
+
+    if (config.mobileMenuSidebarLogoSelector !== null) {
+      menuContentHTML = document.querySelector(config.mobileMenuSidebarLogoSelector).outerHTML;
+    } else if (config.mobileMenuSidebarLogoUrl !== null) {
+      menuContentHTML = '<img src="' + config.mobileMenuSidebarLogoUrl + '" alt="" />';
+    }
+
+    menuContentHTML += document.querySelector(config.menuSelector).outerHTML;
+    menuWrapper.innerHTML = menuContentHTML;
+
+    var menuOverlay = document.createElement('div');
+    menuOverlay.classList.add(config.mobileMenuSidebarOverlayClass);
+    menuOverlay.classList.add(config.hiddenElementClass);
+
+    document.body.appendChild(menuOverlay);
+    document.body.appendChild(menuWrapper);
+
+    // Init toggle submenus
+    if (config.mobileMenuExpandableSubmenus) {
+      wrapSubmenusIntoContainer(menuWrapper);
+      initToggleSubmenu(menuWrapper);
+    } else {
+      setAriaForSubmenus(menuWrapper);
+    }
+
+    // Menu events
+    menuWrapper.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
+    menuOverlay.addEventListener('click', function () {
+      menuWrapper.classList.add(config.hiddenElementClass);
+      menuOverlay.classList.add(config.hiddenElementClass);
+      button.classList.remove(config.openedMenuClass);
+      button.setAttribute(config.ariaButtonAttribute, false);
+      document.documentElement.classList.remove(config.noScrollClass);
+    });
+
+    // Init button events
+    var button = document.querySelector(config.buttonSelector);
+
+    button.addEventListener('click', function () {
+      menuWrapper.classList.toggle(config.hiddenElementClass);
+      menuOverlay.classList.toggle(config.hiddenElementClass);
+      button.classList.toggle(config.openedMenuClass);
+      button.setAttribute(config.ariaButtonAttribute, button.classList.contains(config.openedMenuClass));
+      document.documentElement.classList.toggle(config.noScrollClass);
+    });
+  }
+
+  /**
+   * Set aria-hidden="false" for submenus
+   */
+  function setAriaForSubmenus(menuWrapper) {
+    var submenus = menuWrapper.querySelectorAll(config.submenuSelector);
+
+    for (var i = 0; i < submenus.length; i++) {
+      submenus[i].setAttribute('aria-hidden', false);
+    }
+  }
+
+  /**
+   * Wrap all submenus into div wrappers
+   */
+  function wrapSubmenusIntoContainer(menuWrapper) {
+    var submenus = menuWrapper.querySelectorAll(config.submenuSelector);
+
+    for (var i = 0; i < submenus.length; i++) {
+      var submenuWrapper = document.createElement('div');
+      submenuWrapper.classList.add(config.mobileMenuSubmenuWrapperClass);
+      submenus[i].parentNode.insertBefore(submenuWrapper, submenus[i]);
+      submenuWrapper.appendChild(submenus[i]);
+    }
+  }
+
+  /**
+   * Initialize submenu toggle events
+   */
+  function initToggleSubmenu(menuWrapper) {
+    // Init parent menu item events
+    var parents = menuWrapper.querySelectorAll('.' + config.parentItemClass);
+
+    for (var i = 0; i < parents.length; i++) {
+      // Add toggle events
+      parents[i].addEventListener('click', function (e) {
+        e.stopPropagation();
+        var submenu = this.querySelector('.' + config.mobileMenuSubmenuWrapperClass);
+        var content = submenu.firstElementChild;
+
+        if (submenu.classList.contains(config.openedMenuClass)) {
+          var height = content.clientHeight;
+          submenu.style.height = height + 'px';
+
+          setTimeout(function () {
+            submenu.style.height = '0px';
+          }, 0);
+
+          setTimeout(function () {
+            submenu.removeAttribute('style');
+            submenu.classList.remove(config.openedMenuClass);
+          }, config.animationSpeed);
+
+          content.setAttribute('aria-hidden', true);
+          content.parentNode.firstElementChild.setAttribute('aria-expanded', false);
+        } else {
+          var height = content.clientHeight;
+          submenu.classList.add(config.openedMenuClass);
+          submenu.style.height = '0px';
+
+          setTimeout(function () {
+            submenu.style.height = height + 'px';
+          }, 0);
+
+          setTimeout(function () {
+            submenu.removeAttribute('style');
+          }, config.animationSpeed);
+
+          content.setAttribute('aria-hidden', false);
+          content.parentNode.firstElementChild.setAttribute('aria-expanded', true);
+        }
+      });
+
+      // Block links
+      var childNodes = parents[i].children;
+
+      for (var j = 0; j < childNodes.length; j++) {
+        if (childNodes[j].tagName === 'A') {
+          childNodes[j].addEventListener('click', function (e) {
+            var lastClick = parseInt(this.getAttribute('data-last-click'), 10);
+            var currentTime = +new Date();
+
+            if (isNaN(lastClick)) {
+              e.preventDefault();
+              this.setAttribute('data-last-click', currentTime);
+            } else if (lastClick + config.doubleClickTime <= currentTime) {
+              e.preventDefault();
+              this.setAttribute('data-last-click', currentTime);
+            } else if (lastClick + config.doubleClickTime > currentTime) {
+              e.stopPropagation();
+              closeMenu(this, true);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Set aria-* attributes according to the current activity state
+   */
+  function initAriaAttributes() {
+    var allAriaElements = document.querySelectorAll(config.wrapperSelector + ' ' + '*[aria-hidden]');
+
+    for (var i = 0; i < allAriaElements.length; i++) {
+      var ariaElement = allAriaElements[i];
+
+      if (
+        ariaElement.parentNode.classList.contains('active') ||
+        ariaElement.parentNode.classList.contains('active-parent')
+      ) {
+        ariaElement.setAttribute('aria-hidden', 'false');
+        ariaElement.parentNode.firstElementChild.setAttribute('aria-expanded', true);
+      } else {
+        ariaElement.setAttribute('aria-hidden', 'true');
+        ariaElement.parentNode.firstElementChild.setAttribute('aria-expanded', false);
+      }
+    }
+  }
+
+  /**
+   * Close menu on click link
+   */
+  function initClosingMenuOnClickLink() {
+    var links = document.querySelectorAll(config.menuSelector + ' a');
+
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].parentNode.classList.contains(config.parentItemClass)) {
+        continue;
+      }
+
+      links[i].addEventListener('click', function (e) {
+        closeMenu(this, false);
+      });
+    }
+  }
+
+  /**
+   * Close menu
+   */
+  function closeMenu(clickedLink, forceClose) {
+    if (forceClose === false) {
+      if (clickedLink.parentNode.classList.contains(config.parentItemClass)) {
+        return;
+      }
+    }
+
+    var relatedContainer = document.querySelector(config.relatedContainerForOverlayMenuSelector);
+    var button = document.querySelector(config.buttonSelector);
+    var menuWrapper = document.querySelector('.' + config.mobileMenuOverlayClass);
+
+    if (!menuWrapper) {
+      menuWrapper = document.querySelector('.' + config.mobileMenuSidebarClass);
+    }
+
+    menuWrapper.classList.add(config.hiddenElementClass);
+    button.classList.remove(config.openedMenuClass);
+    button.setAttribute(config.ariaButtonAttribute, false);
+    document.documentElement.classList.remove(config.noScrollClass);
+
+    if (relatedContainer) {
+      relatedContainer.classList.remove(config.relatedContainerForOverlayMenuClass);
+    }
+
+    var menuOverlay = document.querySelector('.' + config.mobileMenuSidebarOverlayClass);
+
+    if (menuOverlay) {
+      menuOverlay.classList.add(config.hiddenElementClass);
+    }
+  }
+
+  /**
+   * Run menu scripts 
+   */
+  init();
 })(window.publiiThemeMenuConfig);
 
 // Load search input area
