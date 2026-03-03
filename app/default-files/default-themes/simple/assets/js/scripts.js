@@ -513,7 +513,7 @@ function initSubmenuPositions() {
           }, config.animationSpeed);
 
           content.setAttribute('aria-hidden', true);
-          content.parentNode.firstElementChild.setAttribute('aria-expanded', false);
+          this.children[0].setAttribute('aria-expanded', false);
         } else {
           var height = content.clientHeight;
           submenu.classList.add(config.openedMenuClass);
@@ -528,7 +528,7 @@ function initSubmenuPositions() {
           }, config.animationSpeed);
 
           content.setAttribute('aria-hidden', false);
-          content.parentNode.firstElementChild.setAttribute('aria-expanded', true);
+          this.children[0].setAttribute('aria-expanded', true);
         }
       });
 
