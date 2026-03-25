@@ -194,63 +194,95 @@ electronApp.on('ready', function () {
     // Get available spellchecker languages
     ipcMain.handle('app-main-get-spellchecker-languages', (event) => appInstance.getMainWindow().webContents.session.availableSpellCheckerLanguages);
 
-    if (process.env.NODE_ENV !== 'development') {
-        const template = [{
+    let appTopMenu = {
+        label: "Publii",
+        submenu: [{
+            label: "About Application",
+            selector: "orderFrontStandardAboutPanel:"
+        }, 
+        { 
+            role: 'hide' 
+        },
+        { 
+            role: 'hideOthers' 
+        },
+        { 
+            role: 'unhide' 
+        },
+        {
+            type: "separator"
+        }, 
+        {
+            label: "Quit",
+            accelerator: "CmdOrCtrl+Q",
+            click: () => { 
+                electronApp.quit();
+            }
+        }]
+    };
+
+    if (process.platform !== 'darwin') {
+        appTopMenu = {
             label: "Publii",
             submenu: [{
                 label: "About Application",
                 selector: "orderFrontStandardAboutPanel:"
-            }, {
+            }, 
+            {
                 type: "separator"
-            }, {
+            }, 
+            {
                 label: "Quit",
                 accelerator: "CmdOrCtrl+Q",
                 click: () => { 
                     electronApp.quit();
                 }
             }]
-        }, {
-            label: "Edit",
-            submenu: [
-                {
-                    label: "Undo",
-                    accelerator: "CmdOrCtrl+Z",
-                    selector: "undo:"
-                },
-                {
-                    label: "Redo",
-                    accelerator: "Shift+CmdOrCtrl+Z",
-                    selector: "redo:"
-                },
-                {
-                    type: "separator"
-                },
-                {
-                    label: "Cut",
-                    accelerator: "CmdOrCtrl+X",
-                    selector: "cut:"
-                },
-                {
-                    label: "Copy",
-                    accelerator: "CmdOrCtrl+C",
-                    selector: "copy:"
-                },
-                {
-                    label: "Paste",
-                    accelerator: "CmdOrCtrl+V",
-                    selector: "paste:"
-                },
-                {
-                    label: "Select All",
-                    accelerator: "CmdOrCtrl+A",
-                    selector: "selectAll:"
-                }
-            ]
-        }];
-
-        const menu = Menu.buildFromTemplate(template);
-        Menu.setApplicationMenu(menu);
+        };
     }
+
+    let editTopMenu = {
+        label: "Edit",
+        submenu: [
+            {
+                label: "Undo",
+                accelerator: "CmdOrCtrl+Z",
+                selector: "undo:"
+            },
+            {
+                label: "Redo",
+                accelerator: "Shift+CmdOrCtrl+Z",
+                selector: "redo:"
+            },
+            {
+                type: "separator"
+            },
+            {
+                label: "Cut",
+                accelerator: "CmdOrCtrl+X",
+                selector: "cut:"
+            },
+            {
+                label: "Copy",
+                accelerator: "CmdOrCtrl+C",
+                selector: "copy:"
+            },
+            {
+                label: "Paste",
+                accelerator: "CmdOrCtrl+V",
+                selector: "paste:"
+            },
+            {
+                label: "Select All",
+                accelerator: "CmdOrCtrl+A",
+                selector: "selectAll:"
+            }
+        ]
+    };
+
+    const template = [appTopMenu, editTopMenu];
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
 
     // Remove application menu on Linux
     if (process.platform === 'linux') {
