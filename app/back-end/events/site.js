@@ -27,6 +27,11 @@ class SiteEvents {
          * Reload site config and data
          */
         ipcMain.on('app-site-reload', (event, config) => {
+            if (!config || !self.siteDirExists(appInstance, config.siteName)) {
+                event.sender.send('app-site-reloaded', { status: false });
+                return;
+            }
+
             let result = appInstance.reloadSite(config.siteName);
             let language = this.getSiteLanguage(appInstance, config.siteName);
             this.setSpellcheckerLanguage (appInstance, language);
@@ -362,6 +367,11 @@ class SiteEvents {
          * Switch website
          */
         ipcMain.on('app-site-switch', (event, config) => {
+            if (!config || !self.siteDirExists(appInstance, config.site)) {
+                event.sender.send('app-site-switched', { status: false });
+                return;
+            }
+
             let result = appInstance.switchSite(config.site);
             let language = this.getSiteLanguage(appInstance, config.site);
             this.setSpellcheckerLanguage (appInstance, language);
@@ -372,6 +382,11 @@ class SiteEvents {
          * Refresh website data
          */
         ipcMain.on('app-site-refresh', function (event, config) {
+            if (!config || !self.siteDirExists(appInstance, config.site)) {
+                event.sender.send('app-site-refreshed', { status: false });
+                return;
+            }
+
             let result = appInstance.switchSite(config.site);
             event.sender.send('app-site-refreshed', result);
         });
@@ -481,6 +496,10 @@ class SiteEvents {
          * Regenerate thumbnails
          */
         ipcMain.on('app-site-regenerate-thumbnails', function(event, config) {
+            if (!config || !self.siteDirExists(appInstance, config.name)) {
+                return;
+            }
+
             let site = new Site(appInstance, config, true);
             self.regenerateProcess = site.regenerateThumbnails(event.sender);
         });
@@ -550,6 +569,14 @@ class SiteEvents {
          * Save custom CSS
          */
         ipcMain.on('app-site-css-save', function (event, config) {
+            if (!config ||
+                !self.siteDirExists(appInstance, config.site) ||
+                !config.code ||
+                typeof config.code.normal !== 'string') {
+                event.sender.send('app-site-css-saved', false);
+                return;
+            }
+
             Site.saveCustomCSS(appInstance, config.site, config.code);
             event.sender.send('app-site-css-saved', true);
         });
@@ -558,6 +585,11 @@ class SiteEvents {
          * Load custom CSS
          */
         ipcMain.on('app-site-css-load', function (event, config) {
+            if (!config || !self.siteDirExists(appInstance, config.site)) {
+                event.sender.send('app-site-css-loaded', { normal: false });
+                return;
+            }
+
             let customCSS = Site.loadCustomCSS(appInstance, config.site);
             event.sender.send('app-site-css-loaded', customCSS);
         });
@@ -566,6 +598,25 @@ class SiteEvents {
          * Check website catalog name
          */
         ipcMain.on('app-site-check-website-to-restore', async function (event, config) {
+            if (!config ||
+                typeof config.backupPath !== 'string' ||
+                config.backupPath.length === 0 ||
+                config.backupPath.indexOf('\0') !== -1 ||
+                !path.isAbsolute(config.backupPath)) {
+                event.sender.send('app-site-backup-checked', { status: false });
+                return;
+            }
+
+            try {
+                if (!fs.existsSync(config.backupPath) || !fs.statSync(config.backupPath).isFile()) {
+                    event.sender.send('app-site-backup-checked', { status: false });
+                    return;
+                }
+            } catch (e) {
+                event.sender.send('app-site-backup-checked', { status: false });
+                return;
+            }
+
             let result = await Site.checkWebsiteBackup(appInstance, config.backupPath);
             event.sender.send('app-site-backup-checked', result);
         });
@@ -613,6 +664,23 @@ class SiteEvents {
                         .replace('use-', '');
     }
 
+    /**
+     * Returns true when the provided siteName is a safe dir segment and
+     * points to an existing directory under sitesDir.
+     */
+    siteDirExists(appInstance, siteName) {
+        if (!PathValidator.isValidDirSegment(siteName)) {
+            return false;
+        }
+
+        try {
+            let siteDir = path.join(appInstance.sitesDir, siteName);
+            return fs.existsSync(siteDir) && fs.statSync(siteDir).isDirectory();
+        } catch (e) {
+            return false;
+        }
+    }
+
     async loadPassword(settings, type, newPassword) {
         let account = slug(settings.name);
 
@@ -624,7 +692,7 @@ class SiteEvents {
             let existingPassword = await passwordSafeStorage.getPassword(type, account);
 
             if (newPassword !== '') {
-                if (newPassword === 'publii ' + account) {
+                if (newPassword === type + ' ' + account) {
                     newPassword = existingPassword;
                 } else {
                     await passwordSafeStorage.setPassword(type, account, newPassword);

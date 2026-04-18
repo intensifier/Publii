@@ -17,6 +17,11 @@ class PageEvents {
 
         // Load
         ipcMain.on('app-page-load', function (event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site)) {
+                event.sender.send('app-page-loaded', false);
+                return;
+            }
+
             let page = new Page(appInstance, pageData);
             let result = page.load();
             event.sender.send('app-page-loaded', result);
@@ -24,6 +29,11 @@ class PageEvents {
 
         // Save
         ipcMain.on('app-page-save', function (event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site)) {
+                event.sender.send('app-page-saved', false);
+                return;
+            }
+
             let page = new Page(appInstance, pageData);
             let result = page.save();
             event.sender.send('app-page-saved', result);
@@ -31,6 +41,11 @@ class PageEvents {
 
         // Delete
         ipcMain.on('app-page-delete', function (event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site) || !Array.isArray(pageData.ids)) {
+                event.sender.send('app-page-deleted', false);
+                return;
+            }
+
             let result = false;
 
             for(let i = 0; i < pageData.ids.length; i++) {
@@ -47,6 +62,11 @@ class PageEvents {
 
         // Delete
         ipcMain.on('app-page-duplicate', function (event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site) || !Array.isArray(pageData.ids)) {
+                event.sender.send('app-page-duplicated', false);
+                return;
+            }
+
             let result = false;
 
             for(let i = 0; i < pageData.ids.length; i++) {
@@ -63,6 +83,11 @@ class PageEvents {
 
         // Status change
         ipcMain.on('app-page-status-change', function (event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site) || !Array.isArray(pageData.ids)) {
+                event.sender.send('app-page-status-changed', false);
+                return;
+            }
+
             let result = false;
 
             for(let i = 0; i < pageData.ids.length; i++) {
@@ -79,6 +104,11 @@ class PageEvents {
 
         // Cancelled edition
         ipcMain.on('app-page-cancel', function(event, pageData) {
+            if (!pageData || !isValidDirSegment(pageData.site)) {
+                event.sender.send('app-page-cancelled', false);
+                return;
+            }
+
             let page = new Page(appInstance, pageData);
             let result = page.checkAndCleanImages(true);
             event.sender.send('app-page-cancelled', result);

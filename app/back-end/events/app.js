@@ -456,9 +456,10 @@ class AppEvents {
                 event.sender.send('app-log-file-loaded', {
                     fileContent: 'File not found!'
                 });
+                return;
             }
 
-            let filePath = path.join(appInstance.app.getPath('logs'), filename);
+            let filePath = path.join(logPath, filename);
             let fileContent = FileHelper.readFileSync(filePath, 'utf8');
 
             event.sender.send('app-log-file-loaded', {
