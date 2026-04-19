@@ -115,6 +115,11 @@ class PluginsApiEvents {
                 return { status: 'FILE_NOT_SAVED' };
             }
 
+            // Language files are JSON by convention.
+            if (path.extname(data.fileName).toLowerCase() !== '.json') {
+                return { status: 'FILE_NOT_SAVED' };
+            }
+
             let dirPath = path.join(appInstance.sitesDir, data.siteName, 'input', 'languages');
             let filePath = resolveValidPath(dirPath, data.fileName);
 

@@ -44,6 +44,21 @@ electronApp.on('ready', function () {
 
     ipcMain.handle('publii-shell-show-item-in-folder', (event, url) => electron.shell.showItemInFolder(url));
 
+    const blockedExtensions = new Set([
+        // Windows
+        '.exe', '.bat', '.cmd', '.com', '.msi', '.msp', '.scr', '.lnk', '.reg',
+        '.ps1', '.psm1', '.psd1', '.ps1xml', '.psc1',
+        '.vbs', '.vbe', '.wsf', '.wsh', '.js', '.jse', '.hta', '.cpl',
+        // macOS
+        '.app', '.command', '.scpt', '.tool',
+        // Unix
+        '.sh', '.bash', '.zsh', '.fish', '.csh', '.tcsh', '.ksh',
+        // Other
+        '.jar', '.py', '.pyc', '.pyw', '.rb', '.pl', '.php'
+    ]);
+
+    const allowedSubdirs = ['root-files', 'media'];
+
     ipcMain.handle('publii-shell-open-path', (event, filePath) => {
         if (typeof filePath !== 'string' || !filePath) {
             return '';
@@ -59,7 +74,21 @@ electronApp.on('ready', function () {
         let resolvedTarget = path.resolve(filePath);
         let relative = path.relative(resolvedSitesDir, resolvedTarget);
 
-        if (relative.startsWith('..') || path.isAbsolute(relative)) {
+        if (relative.startsWith('..') || path.isAbsolute(relative) || relative === '') {
+            return '';
+        }
+
+        let segments = relative.split(path.sep);
+
+        if (segments.length < 4 ||
+            segments[1] !== 'input' ||
+            allowedSubdirs.indexOf(segments[2]) === -1) {
+            return '';
+        }
+
+        let ext = path.extname(resolvedTarget).toLowerCase();
+
+        if (blockedExtensions.has(ext)) {
             return '';
         }
 
