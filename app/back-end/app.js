@@ -692,7 +692,8 @@ class App {
             
             // Open Dev Tools
             if (self.appConfig.openDevToolsInMain) {
-                self.mainWindow.webContents.openDevTools();
+                let devToolsMode = self.appConfig.devToolsMode || 'detach';
+                self.mainWindow.webContents.openDevTools({ mode: devToolsMode });
             }
 
             self.setCurrentZoomLevel();
