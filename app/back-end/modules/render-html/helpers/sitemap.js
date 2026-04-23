@@ -684,10 +684,10 @@ class Sitemap {
                         this.fileList.push({
                             images: this.postData[fileKey].images,
                             lastMod: this.postData[fileKey].lastMod,
-                            url: fileKey + '/'
+                            url: file + '/'
                         });
                     } else {
-                        this.fileList.push(fileKey + '/');
+                        this.fileList.push(file + '/');
                     }
                 }
             }
