@@ -71,7 +71,9 @@ class S3 {
                     secretAccessKey: s3Key,
                 },
                 endpoint: s3Endpoint,
-                region: customRegion
+                region: customRegion,
+                requestChecksumCalculation: 'WHEN_REQUIRED',
+                responseChecksumValidation: 'WHEN_REQUIRED'
             }
         }
 
@@ -394,7 +396,9 @@ class S3 {
                     secretAccessKey: s3Key,
                 },
                 endpoint: s3Endpoint,
-                region: customRegion
+                region: customRegion,
+                requestChecksumCalculation: 'WHEN_REQUIRED',
+                responseChecksumValidation: 'WHEN_REQUIRED'
             }
         }
 
