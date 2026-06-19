@@ -60,6 +60,15 @@ export default {
         },
         placeholder () {
             return this.$t('post.selectPostPage');
+        },
+        postTitlesById () {
+            let map = new Map();
+
+            for (let post of this.$store.state.currentSite.posts) {
+                map.set(post.id, post.title);
+            }
+
+            return map;
         }
     },
     watch: {
@@ -77,7 +86,7 @@ export default {
     },
     methods: {
         postLabels (value) {
-            return this.$store.state.currentSite.posts.filter(post => post.id === value).map(post => post.title)[0];
+            return this.postTitlesById.get(value);
         },
         closeDropdown () {
             this.$refs['dropdown'].isOpen = false;

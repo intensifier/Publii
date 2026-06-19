@@ -47,6 +47,15 @@ export default {
         },
         placeholder () {
             return this.$t('author.selectAuthor');
+        },
+        authorNamesById () {
+            let map = new Map();
+
+            for (let author of this.$store.state.currentSite.authors) {
+                map.set(author.id, author.name);
+            }
+
+            return map;
         }
     },
     watch: {
@@ -64,7 +73,7 @@ export default {
     },
     methods: {
         authorLabels (value) {
-            return this.$store.state.currentSite.authors.filter(author => author.id === value).map(author => author.name)[0];
+            return this.authorNamesById.get(value);
         },
         closeDropdown () {
             this.$refs['dropdown'].isOpen = false;

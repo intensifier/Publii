@@ -46,6 +46,15 @@ export default {
         placeholder () {
             return this.$t('tag.selectTag');
         },
+        tagsById () {
+            let map = new Map();
+
+            for (let tag of this.$store.state.currentSite.tags) {
+                map.set(tag.id, tag);
+            }
+
+            return map;
+        }
     },
     watch: {
         value: function (newValue, oldValue) {
@@ -62,13 +71,17 @@ export default {
     },
     methods: {
         tagLabels (value) {
-            return this.$store.state.currentSite.tags.filter(tag => tag.id === value).map(tag => {
-                if (tag.additionalData.indexOf('"isHidden":true') > -1) {
-                    return tag.name + ' (' + this.$t('tag.thisTagIsHidden') + ')';
-                } else {
-                    return tag.name;
-                }
-            })[0];
+            let tag = this.tagsById.get(value);
+
+            if (!tag) {
+                return;
+            }
+
+            if (tag.additionalData.indexOf('"isHidden":true') > -1) {
+                return tag.name + ' (' + this.$t('tag.thisTagIsHidden') + ')';
+            }
+
+            return tag.name;
         },
         closeDropdown () {
             this.$refs['dropdown'].isOpen = false;

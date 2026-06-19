@@ -288,6 +288,42 @@ export default {
         },
         postPages () {
             return this.$store.state.currentSite.posts.filter(post => post.status.indexOf('published') > -1).map(post => post.id);
+        },
+        postTitlesById () {
+            let map = new Map();
+
+            for (let post of this.$store.state.currentSite.posts) {
+                map.set(post.id, post.title);
+            }
+
+            return map;
+        },
+        pageTitlesById () {
+            let map = new Map();
+
+            for (let page of this.$store.state.currentSite.pages) {
+                map.set(page.id, page.title);
+            }
+
+            return map;
+        },
+        tagNamesById () {
+            let map = new Map();
+
+            for (let tag of this.$store.state.currentSite.tags) {
+                map.set(tag.id, tag.name);
+            }
+
+            return map;
+        },
+        authorNamesByUsername () {
+            let map = new Map();
+
+            for (let author of this.$store.state.currentSite.authors) {
+                map.set(author.username, author.name);
+            }
+
+            return map;
         }
     },
     mounted () {
@@ -332,16 +368,16 @@ export default {
             }
         },
         customTagLabels (value) {
-            return this.$store.state.currentSite.tags.filter(tag => tag.additionalData.indexOf('"isHidden":true') === -1 && tag.id === value).map(tag => tag.name)[0];
+            return this.tagNamesById.get(value);
         },
         customAuthorsLabels (value) {
-            return this.$store.state.currentSite.authors.filter(author => author.username === value).map(author => author.name)[0];
+            return this.authorNamesByUsername.get(value);
         },
         customPageLabels (value) {
-            return this.$store.state.currentSite.pages.filter(page => page.id === value).map(page => page.title)[0];
+            return this.pageTitlesById.get(value);
         },
         customPostLabels (value) {
-            return this.$store.state.currentSite.posts.filter(post => post.id === value).map(post => post.title)[0];
+            return this.postTitlesById.get(value);
         },
         customTargetLabels (value) {
             switch (value) {
