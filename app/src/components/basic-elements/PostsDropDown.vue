@@ -4,6 +4,7 @@
         :class="'posts-dropdown ' + customCssClasses.replace(/[^a-z0-9\-\_\s]/gmi, '')"
         :id="anchor"
         :options="postPages"
+        :options-limit="100"
         v-model="selectedPost"
         :custom-label="postLabels"
         :close-on-select="true"

@@ -4,6 +4,7 @@
         :class="'pages-dropdown ' + customCssClasses.replace(/[^a-z0-9\-\_\s]/gmi, '')"
         :id="anchor"
         :options="pages"
+        :options-limit="100"
         v-model="selectedPage"
         :custom-label="pageLabels"
         :close-on-select="true"

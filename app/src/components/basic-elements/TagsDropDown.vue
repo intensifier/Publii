@@ -2,6 +2,7 @@
     <v-select
         ref="dropdown"
         :options="tagPages"
+        :options-limit="100"
         v-model="selectedTag"
         :custom-label="tagLabels"
         :close-on-select="true"

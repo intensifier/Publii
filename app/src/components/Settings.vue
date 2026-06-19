@@ -1323,6 +1323,7 @@
                                 ref="gdprPagesSelect"
                                 slot="field"
                                 :options="postPages"
+                                :options-limit="100"
                                 v-model="advanced.gdpr.privacyPolicyPostId"
                                 :custom-label="customPostLabels"
                                 :close-on-select="true"

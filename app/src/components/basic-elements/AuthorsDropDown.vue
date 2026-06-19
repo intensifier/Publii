@@ -3,6 +3,7 @@
     <v-select
         ref="dropdown"
         :options="authors"
+        :options-limit="100"
         v-model="selectedAuthor"
         :custom-label="authorLabels"
         :close-on-select="true"

@@ -88,6 +88,7 @@
                 <v-select
                     ref="tagPagesSelect"
                     :options="tagPages"
+                    :options-limit="100"
                     @click.native="cleanError('tagPage')"
                     v-model="tagPage"
                     :custom-label="customTagLabels"
@@ -108,6 +109,7 @@
                 <v-select
                     ref="authorPagesSelect"
                     :options="authorPages"
+                    :options-limit="100"
                     @click.native="cleanError('authorPage')"
                     v-model="authorPage"
                     :custom-label="customAuthorsLabels"
@@ -128,6 +130,7 @@
                 <v-select
                     ref="postPagesSelect"
                     :options="postPages"
+                    :options-limit="100"
                     @click.native="cleanError('postPage')"
                     v-model="postPage"
                     :custom-label="customPostLabels"
@@ -148,6 +151,7 @@
                 <v-select
                     ref="pagePagesSelect"
                     :options="pagePages"
+                    :options-limit="100"
                     @click.native="cleanError('pagePage')"
                     v-model="pagePage"
                     :custom-label="customPageLabels"
