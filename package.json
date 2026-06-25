@@ -64,6 +64,9 @@
     "productName": "Publii",
     "copyright": "Copyright (C) 2016-2026 TidyCustoms. All rights reserved.",
     "asar": true,
+    "toolsets": {
+      "appimage": "1.0.2"
+    },
     "asarUnpack": [
       "*.+(dylib|node|dll|aff|dic)",
       "default-files/default-themes/**/*",
