@@ -1,7 +1,7 @@
 {
   "productName": "Publii",
   "name": "Publii",
-  "version": "0.47.6",
+  "version": "0.47.7",
   "description": "Static Site CMS",
   "main": "main.js",
   "scripts": {
@@ -37,7 +37,7 @@
     "codemirror": "5.65.13",
     "codemirror-revisedsearch": "1.0.12",
     "count-files": "2.6.2",
-    "dompurify": "3.4.1",
+    "dompurify": "3.4.11",
     "easymde": "2.18.0",
     "fast-memoize": "2.5.2",
     "fast-xml-parser": "5.8.0",
@@ -77,7 +77,7 @@
     "vuex": "3.1.1"
   },
   "devDependencies": {
-    "electron": "39.8.10",
+    "electron": "41.9.1",
     "node-abi": "4.28.0"
   }
 }
