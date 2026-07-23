@@ -579,7 +579,7 @@ class ContentHelper {
             }
 
             if (renderer.previewMode || renderer.siteConfig.advanced.urls.addIndex) {
-                link = link + 'index.html';
+                link = link + (link.endsWith('/') ? '' : '/') + 'index.html';
             }
 
             text = text.split(url).join(resolveLink(link));
